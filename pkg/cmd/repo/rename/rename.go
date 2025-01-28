@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -110,18 +111,24 @@ func renameRun(opts *RenameOptions) error {
 		return err
 	}
 
-	newRepoName := opts.newRepoSelector
-
 	currRepo, err := opts.BaseRepo()
 	if err != nil {
 		return err
 	}
 
+	newRepoName := opts.newRepoSelector
 	if newRepoName == "" {
 		if newRepoName, err = opts.Prompter.Input(fmt.Sprintf(
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	// If the new name contains a slash, extract just the repository name part
+	// This handles both "org/name" and just "name" formats
+	if parts := strings.Split(newRepoName, "/"); len(parts) > 1 {
+		// We only want the repository name part, ignoring any org prefix
+		newRepoName = parts[len(parts)-1]
 	}
 
 	if opts.DoConfirm {
