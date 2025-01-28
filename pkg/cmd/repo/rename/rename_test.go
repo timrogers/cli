@@ -112,6 +112,7 @@ func TestRenameRun(t *testing.T) {
 		execStubs   func(*run.CommandStubber)
 		promptStubs func(*prompter.MockPrompter)
 		wantOut     string
+		wantErr     string
 		tty         bool
 	}{
 		{
@@ -217,6 +218,13 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "new name contains forward slash",
+			opts: RenameOptions{
+				newRepoSelector: "org/NEW_REPO",
+			},
+			wantErr: "new repository name cannot contain '/'",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +276,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})
