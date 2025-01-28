@@ -217,6 +217,22 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "org/name format",
+			tty:  true,
+			opts: RenameOptions{
+				newRepoSelector: "OWNER/NEW_REPO",
+			},
+			wantOut: "✓ Renamed repository OWNER/NEW_REPO\n✓ Updated the \"origin\" remote\n",
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("PATCH", "repos/OWNER/REPO"),
+					httpmock.StatusStringResponse(200, `{"name":"NEW_REPO","owner":{"login":"OWNER"}}`))
+			},
+			execStubs: func(cs *run.CommandStubber) {
+				cs.Register(`git remote set-url origin https://github.com/OWNER/NEW_REPO.git`, 0, "")
+			},
+		},
 	}
 
 	for _, tt := range testCases {
