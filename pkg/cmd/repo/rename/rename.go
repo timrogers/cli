@@ -125,7 +125,9 @@ func renameRun(opts *RenameOptions) error {
 	}
 
 	// If the new name contains a slash, extract just the repository name part
+	// This handles both "org/name" and just "name" formats
 	if parts := strings.Split(newRepoName, "/"); len(parts) > 1 {
+		// We only want the repository name part, ignoring any org prefix
 		newRepoName = parts[len(parts)-1]
 	}
 
