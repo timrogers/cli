@@ -1,8 +1,8 @@
 module github.com/cli/cli/v2
 
-go 1.23.0
+go 1.22.5
 
-toolchain go1.23.5
+toolchain go1.22.11
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -23,12 +23,12 @@ require (
 	github.com/gdamore/tcell/v2 v2.5.4
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.20.3
+	github.com/google/go-containerregistry v0.20.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
-	github.com/henvic/httpretty v0.1.4
+	github.com/henvic/httpretty v0.1.3
 	github.com/in-toto/attestation v1.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51

@@ -14,6 +14,7 @@ import (
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 type iprompter interface {
@@ -122,6 +123,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("new repository name cannot contain '/' character")
 	}
 
 	if opts.DoConfirm {
