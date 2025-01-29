@@ -226,7 +226,7 @@ func TestRenameRun(t *testing.T) {
 				newRepoSelector: "org/new-name",
 			},
 			wantErr: true,
-			errMsg: "new repository name cannot contain '/' character",
+			errMsg:  "new repository name cannot contain '/' character",
 		},
 	}
 
