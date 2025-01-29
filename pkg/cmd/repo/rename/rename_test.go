@@ -225,7 +225,7 @@ func TestRenameRun(t *testing.T) {
 				newRepoSelector: "org/NEW_REPO",
 			},
 			wantErr: true,
-			errMsg: "new name cannot contain '/' character, as it is used for separating owner and repository name",
+			errMsg: "new name cannot contain '/' character, as it is used for separating owner and repository name. To change repository ownership, please use the transfer feature in the GitHub web interface",
 		},
 	}
 
