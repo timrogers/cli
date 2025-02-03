@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -111,6 +112,9 @@ func renameRun(opts *RenameOptions) error {
 	}
 
 	newRepoName := opts.newRepoSelector
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("new repository name cannot contain '/'")
+	}
 
 	currRepo, err := opts.BaseRepo()
 	if err != nil {
