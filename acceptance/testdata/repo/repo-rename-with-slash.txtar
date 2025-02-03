@@ -1,0 +1,13 @@
+# Create a repository with a file so it has a default branch
+exec gh repo create $ORG/$SCRIPT_NAME-$RANDOM_STRING --add-readme --private
+
+# Try to rename the repo with a forward slash in the name
+! exec gh repo rename $ORG/new-name --repo=$ORG/$SCRIPT_NAME-$RANDOM_STRING --yes
+stderr 'repository name cannot contain '/' character, use --repo flag to specify a different owner'
+
+# Verify the repo name hasn't changed
+exec gh repo list $ORG --json=name --jq='.[].name'
+stdout $SCRIPT_NAME-$RANDOM_STRING
+
+# Clean up
+defer gh repo delete $ORG/$SCRIPT_NAME-$RANDOM_STRING --yes
