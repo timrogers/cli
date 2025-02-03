@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -77,6 +78,9 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 
 			if len(args) > 0 {
 				opts.newRepoSelector = args[0]
+				if strings.Contains(opts.newRepoSelector, "/") {
+					return cmdutil.FlagErrorf("repository name cannot contain slashes. Use the transfer command to transfer repository ownership")
+				}
 			} else if !opts.IO.CanPrompt() {
 				return cmdutil.FlagErrorf("new name argument required when not running interactively")
 			}
