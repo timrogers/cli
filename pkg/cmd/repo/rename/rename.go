@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -77,6 +78,9 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 
 			if len(args) > 0 {
 				opts.newRepoSelector = args[0]
+				if strings.Contains(opts.newRepoSelector, "/") {
+					return cmdutil.FlagErrorf("new repository name cannot contain '/' character")
+				}
 			} else if !opts.IO.CanPrompt() {
 				return cmdutil.FlagErrorf("new name argument required when not running interactively")
 			}
@@ -122,6 +126,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("new repository name cannot contain '/' character")
 	}
 
 	if opts.DoConfirm {
