@@ -104,6 +104,50 @@ func TestNewCmdRename(t *testing.T) {
 	}
 }
 
+func TestValidateNewRepoName(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{
+			name:  "valid name",
+			input: "valid-repo-name",
+		},
+		{
+			name:    "empty name",
+			input:   "",
+			wantErr: "new repository name cannot be empty",
+		},
+		{
+			name:    "current directory",
+			input:   ".",
+			wantErr: "new repository name cannot be '.' or '..'",
+		},
+		{
+			name:    "parent directory",
+			input:   "..",
+			wantErr: "new repository name cannot be '.' or '..'",
+		},
+		{
+			name:    "contains forward slash",
+			input:   "org/repo",
+			wantErr: "new repository name cannot contain '/' characters",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateNewRepoName(tt.input)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestRenameRun(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -112,6 +156,7 @@ func TestRenameRun(t *testing.T) {
 		execStubs   func(*run.CommandStubber)
 		promptStubs func(*prompter.MockPrompter)
 		wantOut     string
+		wantErr     string
 		tty         bool
 	}{
 		{
@@ -217,6 +262,13 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "error with forward slash in name",
+			opts: RenameOptions{
+				newRepoSelector: "org/repo",
+			},
+			wantErr: "new repository name cannot contain '/' characters",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +320,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})

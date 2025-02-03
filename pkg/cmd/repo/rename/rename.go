@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -104,6 +105,19 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 	return cmd
 }
 
+func validateNewRepoName(name string) error {
+	if name == "" {
+		return fmt.Errorf("new repository name cannot be empty")
+	}
+	if name == "." || name == ".." {
+		return fmt.Errorf("new repository name cannot be '.' or '..'")
+	}
+	if idx := strings.Index(name, "/"); idx >= 0 {
+		return fmt.Errorf("new repository name cannot contain '/' characters")
+	}
+	return nil
+}
+
 func renameRun(opts *RenameOptions) error {
 	httpClient, err := opts.HttpClient()
 	if err != nil {
@@ -122,6 +136,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if err := validateNewRepoName(newRepoName); err != nil {
+		return err
 	}
 
 	if opts.DoConfirm {
