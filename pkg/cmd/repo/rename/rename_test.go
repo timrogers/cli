@@ -71,6 +71,19 @@ func TestNewCmdRename(t *testing.T) {
 				newRepoSelector: "NEW_REPO",
 			},
 		},
+		{
+			name:    "new name contains slash",
+			input:   "org/newname",
+			tty:     true,
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
+		},
+		{
+			name:    "new name contains slash with --yes",
+			input:   "org/newname --yes",
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -216,6 +229,14 @@ func TestRenameRun(t *testing.T) {
 				})
 			},
 			wantOut: "",
+		},
+		{
+			name: "new name contains slash",
+			opts: RenameOptions{
+				newRepoSelector: "org/newname",
+			},
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
 		},
 	}
 
