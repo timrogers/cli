@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -52,13 +53,13 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 		Long: heredoc.Docf(`
 			Rename a GitHub repository.
 			
-			%[1]s<new-name>%[1]s is the desired repository name without the owner.
+			%[1]s<new-name>%[1]s is the desired repository name without the owner. The new name cannot contain slashes.
 			
 			By default, the current repository is renamed. Otherwise, the repository specified
 			with %[1]s--repo%[1]s is renamed.
 			
 			To transfer repository ownership to another user account or organization,
-			you must follow additional steps on GitHub.com
+			you must follow additional steps on GitHub.com. Do not include the new owner in the repository name.
 
 			For more information on transferring repository ownership, see:
 			<https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository>
@@ -77,6 +78,9 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 
 			if len(args) > 0 {
 				opts.newRepoSelector = args[0]
+				if strings.Contains(opts.newRepoSelector, "/") {
+					return cmdutil.FlagErrorf("repository name cannot contain slashes. Use the transfer command to transfer repository ownership")
+				}
 			} else if !opts.IO.CanPrompt() {
 				return cmdutil.FlagErrorf("new name argument required when not running interactively")
 			}
@@ -122,6 +126,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return cmdutil.FlagErrorf("repository name cannot contain slashes. Use the transfer command to transfer repository ownership")
 	}
 
 	if opts.DoConfirm {

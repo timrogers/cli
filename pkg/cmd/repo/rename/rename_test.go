@@ -71,6 +71,19 @@ func TestNewCmdRename(t *testing.T) {
 				newRepoSelector: "NEW_REPO",
 			},
 		},
+		{
+			name:    "new name contains slash",
+			input:   "org/newname",
+			tty:     true,
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
+		},
+		{
+			name:    "new name contains slash with --yes",
+			input:   "org/newname --yes",
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -112,6 +125,8 @@ func TestRenameRun(t *testing.T) {
 		execStubs   func(*run.CommandStubber)
 		promptStubs func(*prompter.MockPrompter)
 		wantOut     string
+		wantErr     bool
+		errMsg      string
 		tty         bool
 	}{
 		{
@@ -217,6 +232,14 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "new name contains slash",
+			opts: RenameOptions{
+				newRepoSelector: "org/newname",
+			},
+			wantErr: true,
+			errMsg:  "repository name cannot contain slashes. Use the transfer command to transfer repository ownership",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +291,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr {
+				assert.EqualError(t, err, tt.errMsg)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})
