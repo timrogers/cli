@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -52,7 +53,7 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 		Long: heredoc.Docf(`
 			Rename a GitHub repository.
 			
-			%[1]s<new-name>%[1]s is the desired repository name without the owner.
+			%[1]s<new-name>%[1]s is the desired repository name without the owner. The name cannot contain forward slashes.
 			
 			By default, the current repository is renamed. Otherwise, the repository specified
 			with %[1]s--repo%[1]s is renamed.
@@ -64,11 +65,14 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 			<https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository>
 			`, "`"),
 		Example: heredoc.Doc(`
-			# Rename the current repository (foo/bar -> foo/baz)
+			# Rename the current repository from foo/bar to foo/baz
 			$ gh repo rename baz
 
-			# Rename the specified repository (qux/quux -> qux/baz)
+			# Rename the specified repository from qux/quux to qux/baz
 			$ gh repo rename -R qux/quux baz
+
+			# Note: The new name cannot contain forward slashes. To transfer repository ownership,
+			# follow the steps at https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -122,6 +126,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("repository name cannot contain '/' characters. To transfer repository ownership, see: https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository")
 	}
 
 	if opts.DoConfirm {
