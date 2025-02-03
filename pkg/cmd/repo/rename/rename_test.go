@@ -71,6 +71,19 @@ func TestNewCmdRename(t *testing.T) {
 				newRepoSelector: "NEW_REPO",
 			},
 		},
+		{
+			name:    "new name with forward slash",
+			input:   "org/new-name",
+			tty:     true,
+			wantErr: true,
+			errMsg:  "--yes required when passing a single argument",
+		},
+		{
+			name:    "new name with forward slash confirmed",
+			input:   "org/new-name --yes",
+			wantErr: true,
+			errMsg:  "repository name cannot contain '/' character, use --repo flag to specify a different owner",
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,6 +118,16 @@ func TestNewCmdRename(t *testing.T) {
 }
 
 func TestRenameRun(t *testing.T) {
+	testCases := []struct {
+		name        string
+		opts        RenameOptions
+		httpStubs   func(*httpmock.Registry)
+		execStubs   func(*run.CommandStubber)
+		promptStubs func(*prompter.MockPrompter)
+		wantOut     string
+		wantErr     string
+		tty         bool
+	}{
 	testCases := []struct {
 		name        string
 		opts        RenameOptions
@@ -217,6 +240,22 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "new name with forward slash",
+			opts: RenameOptions{
+				newRepoSelector: "org/new-name",
+			},
+			wantErr: "repository name cannot contain '/' character, use --repo flag to specify a different owner",
+		},
+		{
+			name: "new name with forward slash from prompt",
+			promptStubs: func(pm *prompter.MockPrompter) {
+				pm.RegisterInput("Rename OWNER/REPO to:", func(_, _ string) (string, error) {
+					return "org/new-name", nil
+				})
+			},
+			wantErr: "repository name cannot contain '/' character, use --repo flag to specify a different owner",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +307,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})
