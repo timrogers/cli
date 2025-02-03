@@ -1,6 +1,7 @@
 package rename
 
 import (
+	"strings"
 	"context"
 	"fmt"
 	"net/http"
@@ -122,6 +123,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("repository name cannot contain '/'")
 	}
 
 	if opts.DoConfirm {
