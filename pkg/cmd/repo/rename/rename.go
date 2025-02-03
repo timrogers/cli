@@ -124,6 +124,10 @@ func renameRun(opts *RenameOptions) error {
 		}
 	}
 
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("new repository name cannot contain '/'")
+	}
+
 	if opts.DoConfirm {
 		var confirmed bool
 		if confirmed, err = opts.Prompter.Confirm(fmt.Sprintf(
