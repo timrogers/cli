@@ -52,7 +52,8 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 		Long: heredoc.Docf(`
 			Rename a GitHub repository.
 			
-			%[1]s<new-name>%[1]s is the desired repository name without the owner.
+			%[1]s<new-name>%[1]s is the desired repository name without the owner. The name cannot contain
+			forward slashes ('/') as it is not possible to change repository ownership via rename.
 			
 			By default, the current repository is renamed. Otherwise, the repository specified
 			with %[1]s--repo%[1]s is renamed.
@@ -122,6 +123,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("repository name cannot contain '/' character")
 	}
 
 	if opts.DoConfirm {
