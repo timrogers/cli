@@ -71,6 +71,13 @@ func TestNewCmdRename(t *testing.T) {
 				newRepoSelector: "NEW_REPO",
 			},
 		},
+		{
+			name:    "new name contains owner",
+			input:   "NEW_OWNER/NEW_REPO",
+			errMsg:  "new name must not contain '/' - to transfer repository ownership, visit the repository settings on GitHub",
+			wantErr: true,
+			tty:     true,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -112,6 +119,7 @@ func TestRenameRun(t *testing.T) {
 		execStubs   func(*run.CommandStubber)
 		promptStubs func(*prompter.MockPrompter)
 		wantOut     string
+		wantErr     string
 		tty         bool
 	}{
 		{
@@ -217,6 +225,14 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "error on new name with owner",
+			tty:  true,
+			opts: RenameOptions{
+				newRepoSelector: "NEW_OWNER/NEW_REPO",
+			},
+			wantErr: "new name must not contain '/' - to transfer repository ownership, visit the repository settings on GitHub",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +284,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})
