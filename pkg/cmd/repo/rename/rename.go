@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -122,6 +123,10 @@ func renameRun(opts *RenameOptions) error {
 			"Rename %s to:", ghrepo.FullName(currRepo)), ""); err != nil {
 			return err
 		}
+	}
+
+	if strings.Contains(newRepoName, "/") {
+		return fmt.Errorf("repository name cannot contain '/' characters. To transfer repository ownership, see: https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository")
 	}
 
 	if opts.DoConfirm {

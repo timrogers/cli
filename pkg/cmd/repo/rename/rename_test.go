@@ -112,6 +112,7 @@ func TestRenameRun(t *testing.T) {
 		execStubs   func(*run.CommandStubber)
 		promptStubs func(*prompter.MockPrompter)
 		wantOut     string
+		wantErr     string
 		tty         bool
 	}{
 		{
@@ -217,6 +218,23 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "",
 		},
+		{
+			name: "error with forward slash in name",
+			opts: RenameOptions{
+				newRepoSelector: "org/new-name",
+			},
+			wantErr: "repository name cannot contain '/' characters. To transfer repository ownership, see: https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository",
+		},
+		{
+			name: "error with forward slash in prompted name",
+			tty:  true,
+			promptStubs: func(pm *prompter.MockPrompter) {
+				pm.RegisterInput("Rename OWNER/REPO to:", func(_, _ string) (string, error) {
+					return "org/new-name", nil
+				})
+			},
+			wantErr: "repository name cannot contain '/' characters. To transfer repository ownership, see: https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -268,6 +286,10 @@ func TestRenameRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer reg.Verify(t)
 			err := renameRun(&tt.opts)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+				return
+			}
 			assert.NoError(t, err)
 			assert.Equal(t, tt.wantOut, stdout.String())
 		})
