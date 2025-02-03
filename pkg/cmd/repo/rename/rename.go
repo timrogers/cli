@@ -78,6 +78,9 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 
 			if len(args) > 0 {
 				opts.newRepoSelector = args[0]
+				if strings.Contains(opts.newRepoSelector, "/") {
+					return cmdutil.FlagErrorf("new repository name cannot contain '/' character")
+				}
 			} else if !opts.IO.CanPrompt() {
 				return cmdutil.FlagErrorf("new name argument required when not running interactively")
 			}
