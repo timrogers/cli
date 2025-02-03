@@ -21,12 +21,13 @@ import (
 
 func TestNewCmdRename(t *testing.T) {
 	testCases := []struct {
-		name    string
-		input   string
-		output  RenameOptions
-		errMsg  string
-		tty     bool
-		wantErr bool
+		name      string
+		input     string
+		output    RenameOptions
+		errMsg    string
+		tty       bool
+		wantErr   bool
+		runStubs  func(*RenameOptions) error
 	}{
 		{
 			name:    "no arguments no tty",
@@ -46,6 +47,36 @@ func TestNewCmdRename(t *testing.T) {
 			input:   "REPO",
 			errMsg:  "--yes required when passing a single argument",
 			wantErr: true,
+		},
+		{
+			name:    "repo name contains slash",
+			input:   "org/repo --yes",
+			errMsg:  "repository name cannot contain '/'",
+			wantErr: true,
+			runStubs: func(opts *RenameOptions) error {
+				ios, _, _, _ := iostreams.Test()
+				opts.IO = ios
+				opts.BaseRepo = func() (ghrepo.Interface, error) {
+					return ghrepo.New("OWNER", "REPO"), nil
+				}
+				opts.Config = func() (gh.Config, error) {
+					return config.NewBlankConfig(), nil
+				}
+				opts.Remotes = func() (context.Remotes, error) {
+					repo, _ := ghrepo.FromFullName("OWNER/REPO")
+					return []*context.Remote{
+						{
+							Remote: &git.Remote{Name: "origin"},
+							Repo:   repo,
+						},
+					}, nil
+				}
+				opts.HttpClient = func() (*http.Client, error) {
+					return &http.Client{}, nil
+				}
+				opts.GitClient = &git.Client{GitPath: "some/path/git"}
+				return renameRun(opts)
+			},
 		},
 		{
 			name:  "one argument tty confirmed",
@@ -79,6 +110,9 @@ func TestNewCmdRename(t *testing.T) {
 			ios.SetStdoutTTY(tt.tty)
 			f := &cmdutil.Factory{
 				IOStreams: ios,
+				BaseRepo: func() (ghrepo.Interface, error) {
+					return ghrepo.New("OWNER", "REPO"), nil
+				},
 			}
 
 			argv, err := shlex.Split(tt.input)
@@ -86,6 +120,9 @@ func TestNewCmdRename(t *testing.T) {
 			var gotOpts *RenameOptions
 			cmd := NewCmdRename(f, func(opts *RenameOptions) error {
 				gotOpts = opts
+				if tt.runStubs != nil {
+					return tt.runStubs(opts)
+				}
 				return nil
 			})
 			cmd.SetArgs(argv)
@@ -98,8 +135,12 @@ func TestNewCmdRename(t *testing.T) {
 				assert.EqualError(t, err, tt.errMsg)
 				return
 			}
-			assert.NoError(t, err)
-			assert.Equal(t, tt.output.newRepoSelector, gotOpts.newRepoSelector)
+			if tt.wantErr {
+				assert.EqualError(t, err, tt.errMsg)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.output.newRepoSelector, gotOpts.newRepoSelector)
+			}
 		})
 	}
 }
